@@ -1,0 +1,14 @@
+# Local/private handoff material
+RECRUIT_DECK_HANDOFF_2026-07-23.md
+
+# macOS
+.DS_Store
+
+# Project dependencies and build artefacts
+**/node_modules/
+**/.next/
+**/.vinext/
+**/.wrangler/
+**/dist/
+**/coverage/
+
