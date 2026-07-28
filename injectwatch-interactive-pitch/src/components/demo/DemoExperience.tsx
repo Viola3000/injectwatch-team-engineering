@@ -62,7 +62,7 @@ function DemoShell({ children }: { children: ReactNode }) {
     <main className="demo-shell">
       <header className="demo-header">
         <div className="demo-header-primary">
-          <Link to="/pitch/05-scenario" className="return-link">
+          <Link to="/pitch/06-scenario" className="return-link">
             <ArrowLeft size={16} /> Return to pitch
           </Link>
           <div className="demo-wordmark">
@@ -406,8 +406,8 @@ export function EventDetailPage() {
               Open field view in this browser <Smartphone size={17} />
             </button>
           ) : state.step === "closed_verified" ? (
-            <button className="button primary" onClick={() => navigate("/pitch/06-build")}>
-              Continue to what we build together <ArrowRight size={17} />
+            <button className="button primary" onClick={() => navigate("/pitch/07-prototype")}>
+              Continue to what this prototype represents <ArrowRight size={17} />
             </button>
           ) : (
             <span className="workflow-progress">Workflow in progress · {humanise(state.step)}</span>
@@ -685,8 +685,8 @@ export function ReviewPage() {
                   <span>Label governance · Eligible for curated review</span>
                 </div>
                 <p><ShieldCheck size={18} /> Eligible for curated label review. No automatic rule or model update occurs.</p>
-                <button className="button primary" onClick={() => navigate("/pitch/06-build")}>
-                  Continue to what we build together <ArrowRight size={17} />
+                <button className="button primary" onClick={() => navigate("/pitch/07-prototype")}>
+                  Continue to what this prototype represents <ArrowRight size={17} />
                 </button>
               </div>
             )}

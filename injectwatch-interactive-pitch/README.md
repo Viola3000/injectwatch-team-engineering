@@ -52,7 +52,8 @@ Production builds do not enable source maps.
 The app uses stable hash routes:
 
 - `#/` — Explore mode
-- `#/pitch/01-opening` through `#/pitch/08-join` — Guided Pitch mode
+- `#/pitch/01-opening` through `#/pitch/10-deliver` — ten-chapter,
+  three-speaker Guided Pitch mode
 - `#/demo/console` — candidate queue
 - `#/demo/event/SYN-EV-1042` — evidence review
 - `#/demo/field` — independent, pre-seeded field replay when opened directly
@@ -63,7 +64,12 @@ Guided Pitch controls:
 - next: `ArrowRight`, `PageDown`, or `Space`
 - back: `ArrowLeft` or `PageUp`
 - exit guided mode: `Esc`
-- presenter cues: `P`
+- optional audience context: `P`
+
+The audience-context panel contains supplementary definitions, boundaries and
+research extensions rather than a verbatim presenter script. Its open/closed
+state persists for the browser session, including when the guided pitch resumes
+after the synthetic console.
 
 During the simulation, workflow actions replace ordinary pitch navigation so a
 presenter cannot silently skip a required state transition.
@@ -91,4 +97,3 @@ governed architecture and security review.
 
 The direct mobile field route is a standalone replay. It is not synchronised
 with the desktop workflow or any other device.
-

@@ -1,5 +1,5 @@
 import { cloneElement, type ReactElement } from "react";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import { describe, expect, it, vi } from "vitest";
 import {
@@ -58,6 +58,67 @@ describe("stable routes and critical wording", () => {
       screen.getByRole("heading", { name: "InjectWatch" }),
     ).toBeInTheDocument();
     expect(screen.getByText("From industrial signals to field decisions.")).toBeInTheDocument();
+  });
+
+  it("shows industrial AI challenges and optional audience context", () => {
+    renderRoute(
+      "/pitch/04-industrial-ai",
+      <GuidedPitchPage />,
+      { step: "queue", feedback: null, technicalReview: null },
+    );
+    expect(
+      screen.getByRole("heading", { name: "Event intelligence, not isolated scores." }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Incomplete expert labels")).toBeInTheDocument();
+    expect(screen.queryByLabelText("Optional audience context")).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /P · Context off/ }));
+
+    expect(screen.getByLabelText("Optional audience context")).toBeInTheDocument();
+    expect(screen.getByText("Research directions behind the workflow")).toBeInTheDocument();
+  });
+
+  it("remembers audience context across guided-page remounts", () => {
+    const firstView = renderRoute(
+      "/pitch/02-decision-gap",
+      <GuidedPitchPage />,
+      { step: "queue", feedback: null, technicalReview: null },
+    );
+    fireEvent.click(screen.getByRole("button", { name: /P · Context off/ }));
+    firstView.unmount();
+
+    renderRoute(
+      "/pitch/07-prototype",
+      <GuidedPitchPage />,
+      { step: "queue", feedback: null, technicalReview: null },
+    );
+
+    expect(screen.getByLabelText("Optional audience context")).toBeInTheDocument();
+    expect(screen.getByText("What is fixed—and what is deliberately open")).toBeInTheDocument();
+  });
+
+  it("shows the three-speaker ownership sequence", () => {
+    renderRoute(
+      "/pitch/08-contributions",
+      <GuidedPitchPage />,
+      { step: "queue", feedback: null, technicalReview: null },
+    );
+    expect(screen.getByText("Toby")).toBeInTheDocument();
+    expect(screen.getByText("Machine Learning & Evaluation")).toBeInTheDocument();
+  });
+
+  it("renders the strengthened semester deliverable", () => {
+    renderRoute(
+      "/pitch/10-deliver",
+      <GuidedPitchPage />,
+      { step: "queue", feedback: null, technicalReview: null },
+    );
+    expect(
+      screen.getByRole("heading", {
+        name: "A tested, documented and deployable semester MVP.",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Temporal / graph research")).toBeInTheDocument();
   });
 
   it("renders direct event evidence and inspection wording", () => {
