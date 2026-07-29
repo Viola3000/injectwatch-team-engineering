@@ -188,18 +188,20 @@ function SystemLoopChapter() {
       <header className="chapter-heading split">
         <div>
           <span className="pitch-eyebrow">The system idea</span>
-          <h1>Detect → Understand → Inspect → Verify.</h1>
+          <h1>Detect → Understand → Inspect → Decide → Verify.</h1>
         </div>
         <p>
-          Daily detections become candidate events, evidence becomes a targeted
-          inspection, and the response remains open until recovery is verified.
+          Data evidence becomes a targeted field task, physical evidence returns
+          for the next decision, and the response remains open until recovery is
+          verified.
         </p>
       </header>
-      <div className="loop-phase-strip" aria-label="Four phases of the InjectWatch workflow">
+      <div className="loop-phase-strip" aria-label="Five phases of the InjectWatch workflow">
         <span><strong>01 · Detect</strong>Form a candidate event</span>
         <span><strong>02 · Understand</strong>Assemble evidence and uncertainty</span>
-        <span><strong>03 · Inspect</strong>Capture expert-approved field feedback</span>
-        <span><strong>04 · Verify</strong>Close only with outcome evidence</span>
+        <span><strong>03 · Inspect</strong>Collect physical field evidence</span>
+        <span><strong>04 · Decide</strong>Act within authority or escalate</span>
+        <span><strong>05 · Verify</strong>Close only with outcome evidence</span>
       </div>
       <div className="loop-grid">
         {systemLoop.map((step, index) => (
@@ -225,9 +227,9 @@ function ScenarioChapter() {
         <span className="pitch-eyebrow">The demo hand-off</span>
         <h1>Six detections become one reviewable event.</h1>
         <p>
-          The plan remains stable while actual injection declines. Wellhead
-          pressure rises, upstream manifold pressure stays stable, and no root
-          cause is treated as confirmed.
+          Follow one branch from a data-level hypothesis to a targeted
+          inspection, physical field evidence, engineering review and verified
+          recovery.
         </p>
         <div className="event-formation-strip">
           <span><strong>6</strong>daily detections</span>
@@ -508,7 +510,9 @@ export function GuidedPitchPage() {
       }
       if (["ArrowRight", "PageDown", " "].includes(event.key)) {
         event.preventDefault();
-        navigate(next);
+        navigate(next, {
+          state: current.id === "scenario" ? { pitchMode: true } : undefined,
+        });
       }
       if (["ArrowLeft", "PageUp"].includes(event.key) && previous) {
         event.preventDefault();
@@ -517,7 +521,7 @@ export function GuidedPitchPage() {
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [navigate, next, previous]);
+  }, [current.id, navigate, next, previous]);
 
   const requestFullscreen = async () => {
     if (!document.fullscreenElement) await document.documentElement.requestFullscreen();
@@ -586,7 +590,14 @@ export function GuidedPitchPage() {
             </Link>
           ))}
         </nav>
-        <button className="pitch-nav-button is-next" onClick={() => navigate(next)}>
+        <button
+          className="pitch-nav-button is-next"
+          onClick={() =>
+            navigate(next, {
+              state: current.id === "scenario" ? { pitchMode: true } : undefined,
+            })
+          }
+        >
           {current.id === "scenario"
             ? "Enter synthetic console"
             : current.id === "deliver"

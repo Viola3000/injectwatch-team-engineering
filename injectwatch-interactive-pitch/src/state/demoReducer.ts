@@ -24,14 +24,22 @@ export type DemoAction =
 export const guidedFeedback: FieldFeedback = {
   inspectionTaskId: "SYN-INSP-2101",
   result: "confirmed_observation",
-  observedCondition: "Signs consistent with a local restriction",
-  instrumentCheck: "No obvious issue observed under approved check",
+  findingAlignment: "consistent_with_suggestion",
+  actionDisposition: "requires_authorisation",
+  observedCondition:
+    "Local physical indications are consistent with a restriction in the inspected path",
+  instrumentCheck:
+    "Local indication differs from the expected operating state; no obvious instrument fault under the approved check",
   operationContext: "No planned set-point reduction recorded in the scenario",
-  inspectionActionRecord: "No corrective action performed during inspection",
-  followUp: "Technical review and action decision required",
+  initialJudgement:
+    "Physical findings support the suggested local-restriction direction; the exact component or mechanism is not confirmed",
+  inspectionActionRecord:
+    "No corrective action performed; the next action is outside the current inspection-task authority",
+  followUp:
+    "Return physical evidence for engineering review and bounded-action authorisation",
   attachments: [
-    { kind: "synthetic_placeholder", label: "Synthetic context photo A" },
-    { kind: "synthetic_placeholder", label: "Synthetic context photo B" },
+    { kind: "synthetic_placeholder", label: "Synthetic field photo · local indicator" },
+    { kind: "synthetic_placeholder", label: "Synthetic field photo · inspection context" },
   ],
 };
 
@@ -105,4 +113,3 @@ export function demoReducer(state: DemoState, action: DemoAction): DemoState {
       return state;
   }
 }
-

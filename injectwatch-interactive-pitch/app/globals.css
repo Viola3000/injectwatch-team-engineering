@@ -784,7 +784,7 @@ code,
 
 .loop-phase-strip {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
@@ -1736,6 +1736,101 @@ code,
   background: var(--amber-500);
 }
 
+.demo-story-wrap {
+  width: min(1440px, 100%);
+  margin: 0 auto;
+  padding: 10px 24px 0;
+}
+
+.demo-story-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--console-muted);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.demo-story-label strong {
+  color: #e8b849;
+}
+
+.demo-story-rail {
+  margin: 7px 0 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  overflow: hidden;
+  border: 1px solid var(--console-border);
+  border-radius: 9px;
+  background: rgba(10, 28, 40, 0.82);
+  list-style: none;
+}
+
+.demo-story-rail li {
+  min-width: 0;
+  padding: 9px 11px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-right: 1px solid var(--console-border);
+  color: var(--console-muted);
+}
+
+.demo-story-rail li:last-child {
+  border-right: 0;
+}
+
+.demo-story-rail li > i {
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--console-border);
+  border-radius: 50%;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  font-style: normal;
+}
+
+.demo-story-rail li > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.demo-story-rail strong {
+  color: var(--console-text);
+  font-size: 9px;
+}
+
+.demo-story-rail small {
+  overflow: hidden;
+  font-size: 8px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.demo-story-rail li.is-current {
+  background: rgba(229, 150, 0, 0.1);
+  box-shadow: inset 0 2px #e8b849;
+}
+
+.demo-story-rail li.is-current > i {
+  border-color: #b98322;
+  background: #e8b849;
+  color: #102230;
+}
+
+.demo-story-rail li.is-complete > i {
+  border-color: #34755d;
+  background: rgba(47, 149, 82, 0.18);
+  color: #9dd7b0;
+}
+
 .console-page,
 .event-page,
 .review-page {
@@ -2481,6 +2576,44 @@ code,
   font-size: 10px;
 }
 
+.task-source-grid {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.task-source-grid section {
+  padding: 12px;
+  border: 1px solid var(--console-border);
+  border-radius: 8px;
+  background: var(--console-surface-2);
+}
+
+.task-source-grid section > span {
+  color: #e8b849;
+  font-family: var(--font-mono);
+  font-size: 8px;
+  text-transform: uppercase;
+}
+
+.task-source-grid h3 {
+  margin: 6px 0 8px;
+  font-size: 12px;
+}
+
+.task-source-grid ul {
+  margin: 0;
+  padding-left: 15px;
+  color: var(--console-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.task-source-grid li + li {
+  margin-top: 5px;
+}
+
 .drawer-checklist {
   margin-top: 22px;
 }
@@ -2695,6 +2828,36 @@ code,
   line-height: 1.45;
 }
 
+.field-direction {
+  margin-top: 8px;
+  padding: 10px 11px;
+  border: 1px solid #d7e0e7;
+  border-radius: 7px;
+  background: #edf5f5;
+}
+
+.field-direction > span {
+  color: var(--teal-700);
+  font-size: 8px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.field-direction p {
+  margin: 5px 0 0;
+  color: var(--pitch-ink);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.field-direction small {
+  margin-top: 5px;
+  display: block;
+  color: var(--pitch-muted);
+  font-size: 8px;
+  line-height: 1.4;
+}
+
 .mobile-checklist {
   margin-top: 16px;
 }
@@ -2731,6 +2894,101 @@ code,
   margin-top: 15px;
   display: grid;
   gap: 10px;
+}
+
+.field-choice-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+.guided-field-report {
+  margin-top: 12px;
+  display: grid;
+  gap: 9px;
+}
+
+.guided-field-choices {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.guided-field-choices > div {
+  padding: 9px;
+  border: 1px solid #c9d7df;
+  border-radius: 7px;
+  background: white;
+}
+
+.guided-field-choices span {
+  display: block;
+  color: var(--pitch-muted);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.guided-field-choices strong {
+  margin-top: 5px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--teal-700);
+  font-size: 9px;
+  line-height: 1.3;
+}
+
+.guided-field-report dl {
+  margin: 0;
+  border: 1px solid #d7e0e7;
+  border-radius: 7px;
+  background: white;
+}
+
+.guided-field-report dl div {
+  padding: 8px 9px;
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 8px;
+  border-bottom: 1px solid #e2e8ed;
+}
+
+.guided-field-report dl div:last-child {
+  border-bottom: 0;
+}
+
+.guided-field-report dt {
+  color: var(--pitch-muted);
+  font-size: 7px;
+  text-transform: uppercase;
+}
+
+.guided-field-report dd {
+  margin: 0;
+  font-size: 8px;
+  line-height: 1.35;
+}
+
+.guided-evidence-row {
+  padding: 8px 9px;
+  display: grid;
+  gap: 4px;
+  border-radius: 7px;
+  background: #edf2f6;
+}
+
+.guided-evidence-row span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--pitch-ink);
+  font-size: 8px;
+  font-weight: 750;
+}
+
+.guided-evidence-row small {
+  color: var(--pitch-muted);
+  font-size: 7px;
 }
 
 .field-form label {
@@ -2897,6 +3155,16 @@ code,
 .review-conclusion p {
   margin: 0;
   font-size: 11px;
+  line-height: 1.45;
+}
+
+.review-branch-note {
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid #e8b849;
+  background: var(--console-surface-2);
+  color: var(--console-muted);
+  font-size: 9px;
   line-height: 1.45;
 }
 
@@ -3631,6 +3899,23 @@ code,
     font-size: 0;
   }
 
+  .demo-story-wrap {
+    padding-inline: 14px;
+  }
+
+  .demo-story-rail {
+    display: flex;
+    overflow-x: auto;
+  }
+
+  .demo-story-rail li {
+    flex: 0 0 150px;
+  }
+
+  .demo-story-rail small {
+    white-space: normal;
+  }
+
   .console-page,
   .event-page,
   .review-page {
@@ -3703,6 +3988,10 @@ code,
     border-left: 0;
     border-radius: 18px 18px 0 0;
     animation-name: sheet-in;
+  }
+
+  .task-source-grid {
+    grid-template-columns: 1fr;
   }
 
   .field-stage {

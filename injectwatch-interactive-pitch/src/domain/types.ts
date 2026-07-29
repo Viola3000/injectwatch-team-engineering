@@ -60,9 +60,18 @@ export interface InspectionTask {
 export interface FieldFeedback {
   inspectionTaskId: string;
   result: "confirmed_observation" | "not_confirmed" | "inconclusive";
+  findingAlignment:
+    | "consistent_with_suggestion"
+    | "different_issue_found"
+    | "still_inconclusive";
+  actionDisposition:
+    | "resolved_under_approved_procedure"
+    | "requires_authorisation"
+    | "requires_further_guidance";
   observedCondition: string;
   instrumentCheck: string;
   operationContext: string;
+  initialJudgement: string;
   inspectionActionRecord: string;
   followUp: string;
   attachments: Array<{ kind: "synthetic_placeholder"; label: string }>;
@@ -104,4 +113,3 @@ export type StoryStep =
   | "action_authorised"
   | "recovery_monitoring"
   | "closed_verified";
-

@@ -9,10 +9,11 @@ is not a production API contract.
   it is not a confirmed fault.
 - **Inspection task:** an expert-approved request for observations and approved
   checks; it is not a maintenance work order.
-- **Field feedback:** observations recorded by a field role; it does not set a
-  final technical cause or authorise an action.
+- **Field feedback:** physical observations, an initial field judgement,
+  evidence placeholders and an action/authority disposition recorded by a
+  field role. It does not set the final technical cause.
 - **Technical review:** the human gate that compares pre-inspection evidence
-  with field feedback.
+  with physical field evidence and selects the next branch.
 - **Authorised action record:** an abstract synthetic record without operational
   instructions.
 - **Recovery review:** a comparison of post-action signals before closure.
@@ -61,6 +62,21 @@ queue
 The reducer ignores invalid transitions and `RESET_DEMO` restores the exact
 initial state.
 
+The domain supports three field dispositions:
+
+- `resolved_under_approved_procedure` for a routine issue completed within task
+  authority;
+- `requires_authorisation` when the finding is actionable but the next step is
+  outside the current task authority;
+- `requires_further_guidance` when another evidence-gathering round is needed.
+
+The deterministic pitch story uses `requires_authorisation`. It does not imply
+that field crews are unable to complete routine approved actions.
+
+Guided Pitch Mode keeps every professional decision gate but advances across
+the role-navigation screens after approval and field submission. Explore Mode
+keeps the explicit assigned, start, submitted and open-review transitions.
+
 ## Derived lifecycle statuses
 
 The interface derives, rather than stores independently:
@@ -94,4 +110,3 @@ Backend services, databases, authentication, permissions, uploads, camera
 access, notifications, cross-device state, model inference, operational
 instructions, topology, GIS, production work-order integration, and label-store
 mutation are out of scope.
-

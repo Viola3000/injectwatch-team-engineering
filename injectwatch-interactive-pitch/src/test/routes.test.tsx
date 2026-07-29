@@ -133,6 +133,61 @@ describe("stable routes and critical wording", () => {
     expect(screen.getByRole("button", { name: "Approve inspection task" })).toBeInTheDocument();
   });
 
+  it("uses the shortened guided-demo path without removing the human gates", () => {
+    render(
+      <MemoryRouter
+        initialEntries={[
+          {
+            pathname: "/demo/event/SYN-EV-1042",
+            state: { fromWorkflow: true, pitchMode: true },
+          },
+        ]}
+      >
+        <DemoProvider
+          initialState={{
+            step: "evidence_review",
+            feedback: null,
+            technicalReview: null,
+          }}
+        >
+          <Routes>
+            <Route path="/demo/event/SYN-EV-1042" element={<EventDetailPage />} />
+            <Route path="/demo/field" element={<FieldPage />} />
+            <Route path="/demo/review" element={<ReviewPage />} />
+          </Routes>
+        </DemoProvider>
+      </MemoryRouter>,
+    );
+
+    fireEvent.click(screen.getByRole("button", { name: "Approve inspection task" }));
+    expect(screen.getByText("System-generated draft")).toBeInTheDocument();
+    expect(screen.getByText("Engineer review")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Approve & assign/ }));
+
+    expect(
+      screen.getByRole("heading", { name: "Field inspection" }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("In progress")).toBeInTheDocument();
+    expect(screen.getByText("Finding alignment")).toBeInTheDocument();
+    expect(screen.getByText("Consistent with suggestion")).toBeInTheDocument();
+    expect(screen.getByText("Authority outcome")).toBeInTheDocument();
+    expect(screen.getByText("Requires authorisation")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Submit field report/ }));
+
+    expect(
+      screen.getByRole("heading", {
+        name: "Technical review & controlled action",
+      }),
+    ).toBeInTheDocument();
+    expect(screen.getByText("Evidence layer 01 · control room")).toBeInTheDocument();
+    expect(screen.getByText("Evidence layer 02 · field")).toBeInTheDocument();
+    expect(
+      screen.getByText(/outside its current task authority/),
+    ).toBeInTheDocument();
+  });
+
   it("labels the direct field route as an independent replay", () => {
     renderRoute(
       "/demo/field",

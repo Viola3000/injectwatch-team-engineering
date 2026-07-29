@@ -31,7 +31,7 @@ import { candidateEvent, demoRules } from "../../data/syntheticScenario";
 import { syntheticQueue } from "../../data/syntheticQueue";
 import { scenarioMetrics } from "../../domain/metrics";
 import { deriveQueueCounts, deriveStatuses } from "../../domain/selectors";
-import type { FieldFeedback } from "../../domain/types";
+import type { FieldFeedback, StoryStep } from "../../domain/types";
 import { guidedFeedback } from "../../state/demoReducer";
 import { useDemo } from "../../state/DemoContext";
 import { EvidenceCharts } from "../charts/EvidenceCharts";
@@ -41,22 +41,69 @@ import { PrototypeLabel } from "../common/PrototypeLabel";
 const inspectionChecklist = [
   "Confirm whether an approved operation or set-point change explains the pattern.",
   "Verify instrument status using the approved site procedure.",
-  "Inspect the relevant line/valve context under the approved site procedure.",
-  "Record observations; do not perform or prescribe a corrective action as part of this inspection task.",
-  "Attach synthetic photo placeholders if useful.",
+  "Compare the physical equipment state with the suggested local-restriction direction.",
+  "Record observations, initial judgement and relevant evidence.",
+  "Use only routine actions covered by the task authority and approved site procedure; otherwise escalate.",
 ];
+
+const demoPhases = [
+  ["Prioritise", "One event from six detections"],
+  ["Understand", "Review the data hypothesis"],
+  ["Inspect", "Collect physical evidence"],
+  ["Decide", "Act within authority or escalate"],
+  ["Verify", "Confirm recovery before closure"],
+] as const;
+
+const stepPhase: Record<StoryStep, number> = {
+  queue: 0,
+  evidence_review: 1,
+  inspection_assigned: 2,
+  inspection_in_progress: 2,
+  feedback_submitted: 2,
+  technical_review: 3,
+  action_authorised: 3,
+  recovery_monitoring: 4,
+  closed_verified: 4,
+};
 
 function humanise(value: string) {
   return value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
+function DemoStoryRail({ pitchMode }: { pitchMode: boolean }) {
+  const { state } = useDemo();
+  const current = stepPhase[state.step];
+  return (
+    <div className="demo-story-wrap">
+      <div className="demo-story-label">
+        <span>{pitchMode ? "Guided demo · five narrative beats" : "Candidate-to-outcome workflow"}</span>
+        <strong>{current + 1} / {demoPhases.length}</strong>
+      </div>
+      <ol className="demo-story-rail" aria-label="Demo story progress">
+        {demoPhases.map(([label, detail], index) => (
+          <li
+            className={index === current ? "is-current" : index < current ? "is-complete" : ""}
+            aria-current={index === current ? "step" : undefined}
+            key={label}
+          >
+            <i>{index < current ? <Check size={11} /> : index + 1}</i>
+            <span><strong>{label}</strong><small>{detail}</small></span>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 function DemoShell({ children }: { children: ReactNode }) {
   const { state, dispatch } = useDemo();
+  const location = useLocation();
   const navigate = useNavigate();
+  const pitchMode = Boolean(location.state?.pitchMode);
   const statuses = deriveStatuses(state.step);
   const reset = () => {
     dispatch({ type: "RESET_DEMO" });
-    navigate("/demo/console");
+    navigate("/demo/console", { state: pitchMode ? { pitchMode: true } : undefined });
   };
   return (
     <main className="demo-shell">
@@ -78,6 +125,7 @@ function DemoShell({ children }: { children: ReactNode }) {
           <button onClick={reset}><RotateCcw size={15} /> Reset demo</button>
         </div>
       </header>
+      <DemoStoryRail pitchMode={pitchMode} />
       {children}
     </main>
   );
@@ -98,11 +146,15 @@ function StatusStrip() {
 
 export function ConsolePage() {
   const { state, dispatch } = useDemo();
+  const location = useLocation();
   const navigate = useNavigate();
+  const pitchMode = Boolean(location.state?.pitchMode);
   const statuses = deriveStatuses(state.step);
   const openEvent = () => {
     dispatch({ type: "OPEN_EVENT" });
-    navigate("/demo/event/SYN-EV-1042", { state: { fromWorkflow: true } });
+    navigate("/demo/event/SYN-EV-1042", {
+      state: { fromWorkflow: true, pitchMode },
+    });
   };
 
   return (
@@ -197,8 +249,13 @@ function SemanticMetric({
   );
 }
 
-function ApprovalDrawer({ onClose }: { onClose: () => void }) {
-  const { dispatch } = useDemo();
+function ApprovalDrawer({
+  onApprove,
+  onClose,
+}: {
+  onApprove: () => void;
+  onClose: () => void;
+}) {
   const primaryRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
@@ -211,7 +268,7 @@ function ApprovalDrawer({ onClose }: { onClose: () => void }) {
   }, [onClose]);
 
   const approve = () => {
-    dispatch({ type: "APPROVE_INSPECTION" });
+    onApprove();
     onClose();
   };
 
@@ -230,6 +287,26 @@ function ApprovalDrawer({ onClose }: { onClose: () => void }) {
           <div><dt>Priority</dt><dd>High</dd></div>
           <div><dt>Approved by role</dt><dd>Technical reviewer</dd></div>
         </dl>
+        <div className="task-source-grid">
+          <section>
+            <span>System-generated draft</span>
+            <h3>Data hypothesis</h3>
+            <ul>
+              <li>Actual injection down while the plan remains stable</li>
+              <li>Wellhead pressure up; upstream manifold stable</li>
+              <li>Suggested direction: inspect for a possible local restriction</li>
+            </ul>
+          </section>
+          <section>
+            <span>Engineer review</span>
+            <h3>Task scope and authority</h3>
+            <ul>
+              <li>Compare local physical state with the data pattern</li>
+              <li>Record any conflicting evidence or alternative explanation</li>
+              <li>Escalate actions outside approved routine authority</li>
+            </ul>
+          </section>
+        </div>
         <div className="drawer-checklist">
           <h3>Safe inspection checklist</h3>
           {inspectionChecklist.map((item) => (
@@ -254,8 +331,8 @@ function ApprovalDrawer({ onClose }: { onClose: () => void }) {
 const auditEvents = [
   ["queue", "Candidate event assembled", "D-1 · system"],
   ["evidence_review", "Evidence opened for review", "D0 · operator"],
-  ["inspection_assigned", "Inspection approved and assigned", "D0 · technical reviewer"],
-  ["feedback_submitted", "Field feedback submitted", "D0 · Field Crew A"],
+  ["inspection_assigned", "System draft reviewed and assigned", "D0 · technical reviewer"],
+  ["feedback_submitted", "Physical evidence and judgement submitted", "D0 · Field Crew A"],
   ["action_authorised", "Bounded scenario action authorised", "D0 · technical reviewer"],
   ["recovery_monitoring", "Recovery window started", "D+1 · scenario replay"],
   ["closed_verified", "Outcome verified and closed", "D+4 · technical reviewer"],
@@ -291,10 +368,21 @@ function AuditTimeline() {
 }
 
 export function EventDetailPage() {
-  const { state } = useDemo();
+  const { state, dispatch } = useDemo();
+  const location = useLocation();
   const navigate = useNavigate();
+  const pitchMode = Boolean(location.state?.pitchMode);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const statuses = deriveStatuses(state.step);
+  const approveInspection = () => {
+    dispatch({ type: "APPROVE_INSPECTION" });
+    if (pitchMode) {
+      dispatch({ type: "START_INSPECTION" });
+      navigate("/demo/field", {
+        state: { fromWorkflow: true, pitchMode: true },
+      });
+    }
+  };
 
   return (
     <DemoShell>
@@ -401,7 +489,11 @@ export function EventDetailPage() {
           ) : state.step === "inspection_assigned" ? (
             <button
               className="button primary"
-              onClick={() => navigate("/demo/field", { state: { fromWorkflow: true } })}
+              onClick={() =>
+                navigate("/demo/field", {
+                  state: { fromWorkflow: true, pitchMode },
+                })
+              }
             >
               Open field view in this browser <Smartphone size={17} />
             </button>
@@ -414,7 +506,12 @@ export function EventDetailPage() {
           )}
         </div>
       </div>
-      {drawerOpen && <ApprovalDrawer onClose={() => setDrawerOpen(false)} />}
+      {drawerOpen && (
+        <ApprovalDrawer
+          onApprove={approveInspection}
+          onClose={() => setDrawerOpen(false)}
+        />
+      )}
     </DemoShell>
   );
 }
@@ -423,21 +520,69 @@ function FieldFact({ label, value }: { label: string; value: string }) {
   return <div><span>{label}</span><strong>{value}</strong></div>;
 }
 
+function GuidedFieldReport({
+  feedback,
+  onSubmit,
+}: {
+  feedback: FieldFeedback;
+  onSubmit: () => void;
+}) {
+  return (
+    <section className="guided-field-report" aria-label="Prefilled synthetic field report">
+      <div className="guided-field-choices">
+        <div>
+          <span>Finding alignment</span>
+          <strong><CheckCircle2 size={14} /> Consistent with suggestion</strong>
+        </div>
+        <div>
+          <span>Authority outcome</span>
+          <strong><LockKeyhole size={14} /> Requires authorisation</strong>
+        </div>
+      </div>
+      <dl>
+        <div><dt>Physical observation</dt><dd>{feedback.observedCondition}</dd></div>
+        <div><dt>Initial field judgement</dt><dd>{feedback.initialJudgement}</dd></div>
+        <div><dt>Action taken</dt><dd>{feedback.inspectionActionRecord}</dd></div>
+      </dl>
+      <div className="guided-evidence-row">
+        <span><Eye size={14} /> {feedback.attachments.length} synthetic evidence placeholders attached</span>
+        <small>Observation, judgement and action remain separate.</small>
+      </div>
+      <button className="button primary full" type="button" onClick={onSubmit}>
+        Submit field report <ArrowRight size={17} />
+      </button>
+    </section>
+  );
+}
+
 export function FieldPage() {
   const { state, dispatch } = useDemo();
   const location = useLocation();
   const navigate = useNavigate();
   const standalone = !location.state?.fromWorkflow;
+  const pitchMode = Boolean(location.state?.pitchMode);
   const [feedback, setFeedback] = useState<FieldFeedback>(guidedFeedback);
   const started = state.step === "inspection_in_progress";
   const submitted = state.step === "feedback_submitted";
 
-  const update = (key: keyof FieldFeedback, value: string) =>
+  const update = <Key extends keyof FieldFeedback>(
+    key: Key,
+    value: FieldFeedback[Key],
+  ) =>
     setFeedback((current) => ({ ...current, [key]: value }));
 
+  const submitFeedback = () => {
+    dispatch({ type: "SUBMIT_FEEDBACK", payload: feedback });
+    if (pitchMode) {
+      dispatch({ type: "OPEN_TECHNICAL_REVIEW" });
+      navigate("/demo/review", {
+        state: { fromWorkflow: true, pitchMode: true },
+      });
+    }
+  };
   const submit = (event: FormEvent) => {
     event.preventDefault();
-    dispatch({ type: "SUBMIT_FEEDBACK", payload: feedback });
+    submitFeedback();
   };
 
   return (
@@ -466,8 +611,17 @@ export function FieldPage() {
               <FieldFact label="Asset" value="SYN-W027" />
             </section>
             <section className="field-summary">
-              <span>Why this check</span>
-              <p>Injection declined while wellhead pressure rose; exact cause remains unconfirmed.</p>
+              <span>Control-room data hypothesis</span>
+              <p>
+                Injection declined while wellhead pressure rose and upstream
+                pressure stayed stable. Suggested direction: check for a possible
+                local restriction; no root cause is confirmed.
+              </p>
+            </section>
+            <section className="field-direction">
+              <span>Recommended physical checks</span>
+              <p>Compare local equipment state and indication with the expected operating context.</p>
+              <small>Routine actions require an approved procedure and task authority. Otherwise, return the evidence.</small>
             </section>
             {!started && !submitted ? (
               <>
@@ -490,40 +644,74 @@ export function FieldPage() {
                   className="button primary full"
                   onClick={() => {
                     dispatch({ type: "OPEN_TECHNICAL_REVIEW" });
-                    navigate("/demo/review", { state: { fromWorkflow: true } });
+                    navigate("/demo/review", {
+                      state: { fromWorkflow: true, pitchMode },
+                    });
                   }}
                 >
                   Open technical review <ArrowRight size={17} />
                 </button>
               </div>
+            ) : pitchMode ? (
+              <GuidedFieldReport feedback={feedback} onSubmit={submitFeedback} />
             ) : (
               <form className="field-form" onSubmit={submit}>
+                <div className="field-choice-grid">
+                  <label>
+                    Does the finding match the suggested direction?
+                    <select
+                      value={feedback.findingAlignment}
+                      onChange={(event) =>
+                        update(
+                          "findingAlignment",
+                          event.target.value as FieldFeedback["findingAlignment"],
+                        )
+                      }
+                    >
+                      <option value="consistent_with_suggestion">Consistent with suggestion</option>
+                      <option value="different_issue_found">A different issue was found</option>
+                      <option value="still_inconclusive">Still inconclusive</option>
+                    </select>
+                  </label>
+                  <label>
+                    What happens next?
+                    <select
+                      value={feedback.actionDisposition}
+                      onChange={(event) =>
+                        update(
+                          "actionDisposition",
+                          event.target.value as FieldFeedback["actionDisposition"],
+                        )
+                      }
+                    >
+                      <option value="resolved_under_approved_procedure">Resolved under approved procedure</option>
+                      <option value="requires_authorisation">Requires authorisation</option>
+                      <option value="requires_further_guidance">Requires further guidance</option>
+                    </select>
+                  </label>
+                </div>
                 <label>
-                  Result
-                  <select value={feedback.result} onChange={(event) => update("result", event.target.value)}>
-                    <option value="confirmed_observation">Confirmed observation</option>
-                    <option value="not_confirmed">Not confirmed</option>
-                    <option value="inconclusive">Inconclusive</option>
-                  </select>
-                </label>
-                <label>
-                  Observed condition
+                  Physical observations
                   <textarea value={feedback.observedCondition} onChange={(event) => update("observedCondition", event.target.value)} />
                 </label>
                 <label>
-                  Instrument check
+                  Local indication / instrument check
                   <textarea value={feedback.instrumentCheck} onChange={(event) => update("instrumentCheck", event.target.value)} />
                 </label>
                 <label>
-                  Operation context
+                  Operating context
                   <textarea value={feedback.operationContext} onChange={(event) => update("operationContext", event.target.value)} />
                 </label>
                 <label>
-                  Inspection action
+                  Initial field judgement
+                  <textarea value={feedback.initialJudgement} onChange={(event) => update("initialJudgement", event.target.value)} />
+                </label>
+                <label>
+                  Action taken within task authority
                   <textarea value={feedback.inspectionActionRecord} onChange={(event) => update("inspectionActionRecord", event.target.value)} />
                 </label>
                 <label>
-                  Follow-up
+                  Escalation / follow-up note
                   <textarea value={feedback.followUp} onChange={(event) => update("followUp", event.target.value)} />
                 </label>
                 <div className="synthetic-photos" aria-label="Synthetic photo placeholders">
@@ -532,10 +720,12 @@ export function FieldPage() {
                   ))}
                 </div>
                 <p className="field-safety">
-                  Record observations only. Final technical cause and action decisions remain with the reviewer.
+                  Field crews may complete routine actions only when covered by an
+                  approved procedure and task authority. Observations, judgement
+                  and actions remain separate from the final technical conclusion.
                 </p>
                 <button className="button primary full" type="submit">
-                  Submit for technical review <ArrowRight size={17} />
+                  Submit field report <ArrowRight size={17} />
                 </button>
               </form>
             )}
@@ -552,23 +742,26 @@ function ReviewEvidenceColumns() {
   return (
     <div className="review-columns">
       <section>
-        <span>Pre-inspection evidence</span>
-        <h2>Provisional candidate</h2>
+        <span>Evidence layer 01 · control room</span>
+        <h2>Sensor pattern and system hypothesis</h2>
         <ul>
           <li>Recent injection mean is {scenarioMetrics.injectionDeclinePct.toFixed(1)}% below baseline.</li>
           <li>Wellhead pressure increased by {scenarioMetrics.pressureDelta14.toFixed(2)} MPa.</li>
           <li>Manifold pressure remains comparatively stable.</li>
+          <li>Suggested direction: possible restriction in the local flow path.</li>
         </ul>
-        <p>Exact cause not confirmed.</p>
+        <p>Data-level hypothesis · not a confirmed diagnosis</p>
       </section>
       <section>
-        <span>Field feedback</span>
-        <h2>{humanise(feedback.result)}</h2>
+        <span>Evidence layer 02 · field</span>
+        <h2>Physical observations and field judgement</h2>
         <dl>
+          <div><dt>Alignment</dt><dd>{humanise(feedback.findingAlignment)}</dd></div>
           <div><dt>Observed</dt><dd>{feedback.observedCondition}</dd></div>
-          <div><dt>Instrument</dt><dd>{feedback.instrumentCheck}</dd></div>
-          <div><dt>Operation context</dt><dd>{feedback.operationContext}</dd></div>
-          <div><dt>Inspection action</dt><dd>{feedback.inspectionActionRecord}</dd></div>
+          <div><dt>Field judgement</dt><dd>{feedback.initialJudgement}</dd></div>
+          <div><dt>Authority outcome</dt><dd>{humanise(feedback.actionDisposition)}</dd></div>
+          <div><dt>Action record</dt><dd>{feedback.inspectionActionRecord}</dd></div>
+          <div><dt>Evidence attached</dt><dd>{feedback.attachments.length} synthetic media placeholders</dd></div>
         </dl>
       </section>
     </div>
@@ -581,15 +774,29 @@ export function ReviewPage() {
   const navigate = useNavigate();
   const standalone = !location.state?.fromWorkflow;
   const statuses = deriveStatuses(state.step);
+  const [selectedDecision, setSelectedDecision] = useState("authorise");
+  const [branchMessage, setBranchMessage] = useState("");
 
   const decisionOptions = useMemo(
     () => [
-      ["authorise", "Authorise bounded scenario action", "Proceed to an abstracted authorised-action record"],
-      ["monitor", "Continue monitoring", "Keep the candidate open for more evidence"],
-      ["inspect", "Return for further inspection", "Request another approved field check"],
+      ["authorise", "Authorise bounded scenario action", "Accept the escalation and proceed under an approved site procedure"],
+      ["inspect", "Request further inspection", "Return a more targeted approved check to the field team"],
+      ["monitor", "Continue monitoring", "Keep the candidate open while collecting more evidence"],
     ],
     [],
   );
+
+  const applyDecision = () => {
+    if (selectedDecision === "authorise") {
+      dispatch({ type: "AUTHORISE_ACTION" });
+      return;
+    }
+    setBranchMessage(
+      selectedDecision === "inspect"
+        ? "Further inspection would create another field-feedback round. This synthetic pitch continues through the authorised-action branch."
+        : "Continued monitoring would keep the candidate open. This synthetic pitch continues through the authorised-action branch.",
+    );
+  };
 
   return (
     <DemoShell>
@@ -598,7 +805,7 @@ export function ReviewPage() {
           <div>
             <span className="console-kicker">Human approval gate 02</span>
             <h1>Technical review & controlled action</h1>
-            <p>SYN-EV-1042 · separate field observation from technical decision.</p>
+            <p>SYN-EV-1042 · compare control-room evidence with physical field evidence before the next action.</p>
           </div>
           {standalone && <span className="standalone-state">Standalone scenario state</span>}
         </header>
@@ -610,22 +817,32 @@ export function ReviewPage() {
             <div className="review-conclusion">
               <ShieldCheck size={20} />
               <p>
-                Field observations strengthen the local restriction explanation.
-                The exact physical mechanism remains unclassified.
+                The two evidence layers now agree at the local-restriction level.
+                The precise component remains unconfirmed, and the field report
+                marks the next action outside its current task authority.
               </p>
             </div>
             <div className="decision-options" role="radiogroup" aria-label="Technical review decision">
-              {decisionOptions.map(([id, title, detail], index) => (
-                <label className={index === 0 ? "is-selected" : ""} key={id}>
-                  <input type="radio" name="review-decision" defaultChecked={index === 0} />
+              {decisionOptions.map(([id, title, detail]) => (
+                <label className={selectedDecision === id ? "is-selected" : ""} key={id}>
+                  <input
+                    type="radio"
+                    name="review-decision"
+                    checked={selectedDecision === id}
+                    onChange={() => {
+                      setSelectedDecision(id);
+                      setBranchMessage("");
+                    }}
+                  />
                   <span><strong>{title}</strong><small>{detail}</small></span>
                 </label>
               ))}
             </div>
+            {branchMessage && <p className="review-branch-note">{branchMessage}</p>}
             <div className="workflow-action-bar embedded">
-              <div><LockKeyhole size={20} /><p><strong>Reviewer gate</strong><span>No operational instructions are generated.</span></p></div>
-              <button className="button primary" onClick={() => dispatch({ type: "AUTHORISE_ACTION" })}>
-                Authorise bounded scenario action <ArrowRight size={17} />
+              <div><LockKeyhole size={20} /><p><strong>Reviewer gate</strong><span>Accept, request another inspection, or keep the event open.</span></p></div>
+              <button className="button primary" onClick={applyDecision}>
+                {selectedDecision === "authorise" ? "Authorise bounded scenario action" : "Preview this decision path"} <ArrowRight size={17} />
               </button>
             </div>
           </section>
